@@ -33,6 +33,7 @@
 
     // 使用 morgan 中间件，记录请求日志
 
+    mongoose.set('debug', true);//查看数据库操作的所有信息
 
 
     // 路由模块
