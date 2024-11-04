@@ -30,6 +30,7 @@
     app.get('/files', authToken, (req, res) => {
         res.json({ message: '你已成功访问保护路由', user: req.user });
     });
+    
 
     // 使用 morgan 中间件，记录请求日志
 

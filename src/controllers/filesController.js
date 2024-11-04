@@ -1,24 +1,22 @@
-const { get } = require('mongoose');
 const File = require('../models/File');
 
 const getFileList = async (req, res) => {
     try {
         const files = await File.find();
-        console.log(files);
-        const list = files.map(file => {
-            return {
-                id: file._id,
-                filename: file.filename
-            }
-        });
+        console.log("获取文件列表:", files);
+        const list = files.map(file => ({
+            id: file._id,
+            filename: file.filename
+        }));
         res.status(200).json(list);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        console.error("获取文件列表时出错:", error);
+        res.status(500).json({ message: "服务器内部错误" });
     }
 }
 
-const addFile= async (req, res) => {
-    try{
+const addFile = async (req, res) => {
+    try {
         const newFile = await File.create({
             filename: "Untitled",
             filecontent: {
@@ -34,30 +32,60 @@ const addFile= async (req, res) => {
                 ]
             }
         });
-        console.log("新文件",newFile);
+        console.log("新文件创建成功:", newFile);
         res.status(201).json(newFile);
-    } catch (error) {  
-        console.log(error);
-        res.status(409).json({ message: error.message });
+    } catch (error) {
+        console.error("创建文件时出错:", error);
+        res.status(500).json({ message: "服务器内部错误" });
     }
-
 }
 
 const getFileContent = async (req, res) => {
     try {
-        const fileId = req.params.id; // 从请求参数中获取 id
-        const file = await File.findById(fileId); // 使用 Mongoose 的 findById 方法查找文档
+        const fileId = req.params.id;
+        const file = await File.findById(fileId);
 
         if (!file) {
-            return res.status(404).json({ message: '文件未找到' });
+            return res.status(404).json({ message: "文件未找到" });
         }
 
-        res.status(200).json(file); // 返回找到的文件内容
+        console.log("文件内容获取成功:", file);
+        res.status(200).json(file);
     } catch (error) {
-        console.error('查询文件时出错:', error);
-        res.status(500).json({ message: '服务器内部错误' });
+        console.error("查询文件时出错:", error);
+        res.status(500).json({ message: "服务器内部错误" });
+    }
+};
+const updateFile = async (req, res) => {
+    try {
+        console.log("更新请求:", req.body);
+        const { id } = req.params;
+        const content = req.body;
+
+        // 调试输出，确保请求数据正确
+        console.log("更新请求的文件 ID:", id);
+        console.log("更新内容:", content);
+
+        // 使用 findByIdAndUpdate 更新文件内容
+        await File.findByIdAndUpdate(
+            id,
+            { filecontent: content },
+            { new: true, upsert: false } // 确保返回更新后的文档且不新建
+        );
+
+        // 手动查找已更新的文件，确保获取的是最新数据
+        const updatedFile = await File.findById(id);
+
+        if (!updatedFile) {
+            return res.status(404).json({ message: "文件未找到" });
+        }
+
+        console.log("文件更新成功:", updatedFile);
+        res.status(200).json(updatedFile); // 返回更新后的文件内容
+    } catch (error) {
+        console.error("更新文件时出错:", error);
+        res.status(500).json({ message: "服务器内部错误" });
     }
 };
 
-
-module.exports = { getFileList,addFile,getFileContent };
+module.exports = { getFileList, addFile, getFileContent, updateFile };
